@@ -14,6 +14,7 @@ use crate::soundfont::SoundFont;
 use crate::soundfont_math::SoundFontMath;
 use crate::synthesizer_settings::SynthesizerSettings;
 use crate::voice_collection::VoiceCollection;
+use crate::oscillator::InterpMethod;
 
 /// An instance of the SoundFont synthesizer.
 #[derive(Debug)]
@@ -23,6 +24,7 @@ pub struct Synthesizer {
     pub(crate) sample_rate: i32,
     pub(crate) block_size: usize,
     pub(crate) maximum_polyphony: usize,
+    pub(crate) interp_method: InterpMethod,
 
     preset_lookup: HashMap<i32, usize>,
     default_preset: usize,
@@ -110,6 +112,7 @@ impl Synthesizer {
             sample_rate: settings.sample_rate,
             block_size: settings.block_size,
             maximum_polyphony: settings.maximum_polyphony,
+            interp_method: settings.interp_method,
             preset_lookup,
             default_preset,
             channels,

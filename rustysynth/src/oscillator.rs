@@ -8,6 +8,12 @@ use crate::synthesizer_settings::SynthesizerSettings;
 // and the rest represent the integer part.
 // For clarity, fixed-point number variables have a suffix "_fp".
 
+#[derive(Debug, Clone, Copy)]
+pub enum InterpMethod {
+    Default,
+    Nearest,
+}
+
 #[derive(Debug)]
 #[non_exhaustive]
 pub(crate) struct Oscillator {
@@ -28,6 +34,8 @@ pub(crate) struct Oscillator {
     looping: bool,
 
     position_fp: i64,
+    
+    interp_method: InterpMethod,
 }
 
 impl Oscillator {
@@ -50,6 +58,7 @@ impl Oscillator {
             sample_rate_ratio: 0_f32,
             looping: false,
             position_fp: 0,
+            interp_method: InterpMethod::Default,
         }
     }
 
@@ -153,8 +162,17 @@ impl Oscillator {
             let x1 = data[index1] as i64;
             let x2 = data[index2] as i64;
             let a_fp = self.position_fp & (Oscillator::FRAC_UNIT - 1);
-            *sample = Oscillator::FP_TO_SAMPLE
-                * ((x1 << Oscillator::FRAC_BITS) + a_fp * (x2 - x1)) as f32;
+            *sample = 
+            match self.interp_method {
+                InterpMethod::Default => { 
+                    Oscillator::FP_TO_SAMPLE
+                        * ((x1 << Oscillator::FRAC_BITS) + a_fp * (x2 - x1)) as f32
+                },
+                InterpMethod::Nearest => {
+                    Oscillator::FP_TO_SAMPLE
+                        * ((x1 << Oscillator::FRAC_BITS) + a_fp * x1) as f32
+                }
+            };
 
             self.position_fp += pitch_ratio_fp;
         }

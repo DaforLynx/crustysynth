@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use crate::error::SynthesizerError;
+use crate::oscillator::InterpMethod;
 
 /// Specifies a set of parameters for synthesis.
 #[derive(Debug)]
@@ -14,6 +15,8 @@ pub struct SynthesizerSettings {
     pub maximum_polyphony: usize,
     /// The value indicating whether reverb and chorus are enabled.
     pub enable_reverb_and_chorus: bool,
+    /// Interpolation method
+    pub interp_method: InterpMethod,
 }
 
 impl SynthesizerSettings {
@@ -32,6 +35,7 @@ impl SynthesizerSettings {
             block_size: SynthesizerSettings::DEFAULT_BLOCK_SIZE,
             maximum_polyphony: SynthesizerSettings::DEFAULT_MAXIMUM_POLYPHONY,
             enable_reverb_and_chorus: SynthesizerSettings::DEFAULT_ENABLE_REVERB_AND_CHORUS,
+            interp_method: InterpMethod::Default,
         }
     }
 
