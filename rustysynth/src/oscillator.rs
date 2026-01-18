@@ -1,18 +1,12 @@
 #![allow(dead_code)]
 
 use crate::loop_mode::LoopMode;
-use crate::synthesizer_settings::SynthesizerSettings;
+use crate::synthesizer_settings::{SynthesizerSettings, InterpMethod};
 
 // In this class, fixed-point numbers are used for speed-up.
 // A fixed-point number is expressed by Int64, whose lower 24 bits represent the fraction part,
 // and the rest represent the integer part.
 // For clarity, fixed-point number variables have a suffix "_fp".
-
-#[derive(Debug, Clone, Copy)]
-pub enum InterpMethod {
-    Default,
-    Nearest,
-}
 
 #[derive(Debug)]
 #[non_exhaustive]
@@ -160,19 +154,19 @@ impl Oscillator {
             }
 
             let x1 = data[index1] as i64;
-            let x2 = data[index2] as i64;
             let a_fp = self.position_fp & (Oscillator::FRAC_UNIT - 1);
             *sample = 
-            match self.interp_method {
-                InterpMethod::Default => { 
-                    Oscillator::FP_TO_SAMPLE
-                        * ((x1 << Oscillator::FRAC_BITS) + a_fp * (x2 - x1)) as f32
-                },
-                InterpMethod::Nearest => {
-                    Oscillator::FP_TO_SAMPLE
-                        * ((x1 << Oscillator::FRAC_BITS) + a_fp * x1) as f32
-                }
-            };
+                match self.interp_method {
+                    InterpMethod::Default => { 
+                        let x2 = data[index2] as i64;
+                        Oscillator::FP_TO_SAMPLE
+                            * ((x1 << Oscillator::FRAC_BITS) + a_fp * (x2 - x1)) as f32
+                    },
+                    InterpMethod::Nearest => {
+                        Oscillator::FP_TO_SAMPLE
+                            * ((x1 << Oscillator::FRAC_BITS) + a_fp * x1) as f32
+                    }
+                };
 
             self.position_fp += pitch_ratio_fp;
         }

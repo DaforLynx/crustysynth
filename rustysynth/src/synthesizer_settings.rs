@@ -1,7 +1,12 @@
 #![allow(dead_code)]
 
 use crate::error::SynthesizerError;
-use crate::oscillator::InterpMethod;
+
+#[derive(Debug, Clone, Copy)]
+pub enum InterpMethod {
+    Default,
+    Nearest,
+}
 
 /// Specifies a set of parameters for synthesis.
 #[derive(Debug)]

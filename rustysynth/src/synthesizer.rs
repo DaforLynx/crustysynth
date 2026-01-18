@@ -12,10 +12,8 @@ use crate::region_pair::RegionPair;
 use crate::reverb::Reverb;
 use crate::soundfont::SoundFont;
 use crate::soundfont_math::SoundFontMath;
-use crate::synthesizer_settings::SynthesizerSettings;
+use crate::synthesizer_settings::{SynthesizerSettings, InterpMethod};
 use crate::voice_collection::VoiceCollection;
-use crate::oscillator::InterpMethod;
-
 /// An instance of the SoundFont synthesizer.
 #[derive(Debug)]
 #[non_exhaustive]
