@@ -52,7 +52,7 @@ impl Oscillator {
             sample_rate_ratio: 0_f32,
             looping: false,
             position_fp: 0,
-            interp_method: InterpMethod::Default,
+            interp_method: settings.interp_method,
         }
     }
 
