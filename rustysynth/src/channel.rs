@@ -70,7 +70,7 @@ impl Channel {
         self.expression = 127 << 7;
         self.hold_pedal = false;
 
-        self.reverb_send = 40;
+        self.reverb_send = 0;
         self.chorus_send = 0;
 
         self.rpn = -1;

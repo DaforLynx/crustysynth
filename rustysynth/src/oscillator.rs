@@ -30,6 +30,8 @@ pub(crate) struct Oscillator {
     position_fp: i64,
     
     interp_method: InterpMethod,
+    last_index: usize,
+    interp_step: i64,
 }
 
 impl Oscillator {
@@ -53,6 +55,8 @@ impl Oscillator {
             looping: false,
             position_fp: 0,
             interp_method: settings.interp_method,
+            last_index: 0,
+            interp_step: 0,
         }
     }
 
@@ -110,6 +114,10 @@ impl Oscillator {
     fn fill_block_no_loop(&mut self, data: &[i16], block: &mut [f32], pitch_ratio_fp: i64) -> bool {
         for t in 0..block.len() {
             let index = (self.position_fp >> Oscillator::FRAC_BITS) as usize;
+            if index != self.last_index {
+                self.last_index = index;
+                self.interp_step = 0;
+            }
             if index >= self.end as usize {
                 if t > 0 {
                     let len = block.len();
@@ -123,8 +131,8 @@ impl Oscillator {
             let x1 = data[index] as i64;
             let x2 = data[index + 1] as i64;
             let a_fp = self.position_fp & (Oscillator::FRAC_UNIT - 1);
-            block[t] = Oscillator::FP_TO_SAMPLE
-                * ((x1 << Oscillator::FRAC_BITS) + a_fp * (x2 - x1)) as f32;
+            self.interp_step += 1;
+            block[t] = self.interpolate(self.interp_method, x1, x2, a_fp, self.interp_step);
 
             self.position_fp += pitch_ratio_fp;
         }
@@ -147,30 +155,46 @@ impl Oscillator {
                 self.position_fp -= loop_length_fp;
             }
 
-            let index1 = (self.position_fp >> Oscillator::FRAC_BITS) as usize;
-            let mut index2 = index1 + 1;
+            let index1 = (self.position_fp >> Oscillator::FRAC_BITS) as usize; // current or last sample position
+            if index1 != self.last_index {
+                self.last_index = index1;
+                self.interp_step = 0;
+            }
+            let mut index2 = index1 + 1; // next sample position
             if index2 >= self.end_loop as usize {
                 index2 -= loop_length as usize;
             }
 
             let x1 = data[index1] as i64;
-            let a_fp = self.position_fp & (Oscillator::FRAC_UNIT - 1);
-            *sample = 
-                match self.interp_method {
-                    InterpMethod::Default => { 
-                        let x2 = data[index2] as i64;
-                        Oscillator::FP_TO_SAMPLE
-                            * ((x1 << Oscillator::FRAC_BITS) + a_fp * (x2 - x1)) as f32
-                    },
-                    InterpMethod::Nearest => {
-                        Oscillator::FP_TO_SAMPLE
-                            * ((x1 << Oscillator::FRAC_BITS) + a_fp * x1) as f32
-                    }
-                };
+            let x2 = data[index2] as i64;
+            let fractional_position_fp = self.position_fp & (Oscillator::FRAC_UNIT - 1); // fractional portion of position
+            self.interp_step += 1;
+            *sample = self.interpolate(self.interp_method, x1, x2, fractional_position_fp, self.interp_step);
 
-            self.position_fp += pitch_ratio_fp;
+            self.position_fp += pitch_ratio_fp; // advance position by a number with a fractional component
         }
 
         true
     }
+    
+    fn interpolate(&self, method: InterpMethod,  x1: i64, x2: i64, fractional_position_fp: i64, step: i64) -> f32 {
+        let x1_whole_fp = x1 << Oscillator::FRAC_BITS;
+        match method {
+            InterpMethod::SampleAndHold => {
+                Oscillator::FP_TO_SAMPLE
+                    * x1_whole_fp as f32
+            },
+            InterpMethod::Linear => { 
+                let next_point = fractional_position_fp * (x2 - x1);
+                Oscillator::FP_TO_SAMPLE
+                    * (x1_whole_fp + next_point) as f32
+            },
+            InterpMethod::Exponential => {
+                let next_point = (x2 - x1) * step / 2 ;
+                Oscillator::FP_TO_SAMPLE
+                    * (x1_whole_fp + next_point) as f32
+            },
+        }
+    }
 }
+

@@ -4,8 +4,9 @@ use crate::error::SynthesizerError;
 
 #[derive(Debug, Clone, Copy)]
 pub enum InterpMethod {
-    Default,
-    Nearest,
+    SampleAndHold,
+    Linear,
+    Exponential,
 }
 
 /// Specifies a set of parameters for synthesis.
@@ -40,7 +41,7 @@ impl SynthesizerSettings {
             block_size: SynthesizerSettings::DEFAULT_BLOCK_SIZE,
             maximum_polyphony: SynthesizerSettings::DEFAULT_MAXIMUM_POLYPHONY,
             enable_reverb_and_chorus: SynthesizerSettings::DEFAULT_ENABLE_REVERB_AND_CHORUS,
-            interp_method: InterpMethod::Default,
+            interp_method: InterpMethod::SampleAndHold,
         }
     }
 
